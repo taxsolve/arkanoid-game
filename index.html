@@ -7,6 +7,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Arkanoid Game</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             margin: 0;
             padding: 0;
@@ -15,7 +20,10 @@
             align-items: center;
             min-height: 100vh;
             background-color: #000;
-            overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #gameContainer {
             position: relative;
@@ -24,12 +32,13 @@
             aspect-ratio: 16/9;
         }
         #gameCanvas {
+            display: block;
             width: 100%;
             height: 100%;
-            display: block;
             background-color: #000;
+            border: 2px solid #fff;
         }
-        #controls {
+        .controls {
             position: absolute;
             bottom: 20px;
             left: 0;
@@ -37,6 +46,7 @@
             display: flex;
             justify-content: center;
             gap: 20px;
+            z-index: 1;
         }
         .control-btn {
             width: 60px;
@@ -46,109 +56,27 @@
             border-radius: 50%;
             color: white;
             font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            cursor: pointer;
             touch-action: manipulation;
+        }
+        .control-btn:active {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        @media (min-width: 768px) {
+            .controls {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-        <div id="controls">
-            <button class="control-btn" onmousedown="window.movePaddle('left')" onmouseup="window.stopPaddle()" ontouchstart="window.movePaddle('left')" ontouchend="window.stopPaddle()">←</button>
-            <button class="control-btn" onmousedown="window.movePaddle('right')" onmouseup="window.stopPaddle()" ontouchstart="window.movePaddle('right')" ontouchend="window.stopPaddle()">→</button>
+        <div class="controls">
+            <button id="leftBtn" class="control-btn">←</button>
+            <button id="rightBtn" class="control-btn">→</button>
         </div>
     </div>
-    <script>
-        // 오디오 컨텍스트 생성
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 사운드 파일 경로 설정
-        const soundBasePath = 'https://taxsolve.github.io/arkanoid-game/sounds/';
-        
-        // 사운드 버퍼를 저장할 객체
-        const sounds = {
-            brickHit: null,
-            paddleHit: null,
-            gameOver: null,
-            levelUp: null,
-            powerup: null
-        };
-
-        // 사운드 파일 로드 함수
-        async function loadSound(url) {
-            try {
-                const response = await fetch(url);
-                const arrayBuffer = await response.arrayBuffer();
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                return audioBuffer;
-            } catch (e) {
-                console.error('Error loading sound:', url, e);
-                return null;
-            }
-        }
-
-        // 모든 사운드 파일 로드
-        async function loadAllSounds() {
-            sounds.brickHit = await loadSound(soundBasePath + 'brick_hit.wav');
-            sounds.paddleHit = await loadSound(soundBasePath + 'paddle_hit.wav');
-            sounds.gameOver = await loadSound(soundBasePath + 'game_over.wav');
-            sounds.levelUp = await loadSound(soundBasePath + 'level_up.wav');
-            sounds.powerup = await loadSound(soundBasePath + 'powerup.wav');
-            console.log('All sounds loaded:', sounds);
-        }
-
-        // 사운드 재생 함수
-        function playSound(buffer) {
-            if (buffer) {
-                const source = audioContext.createBufferSource();
-                source.buffer = buffer;
-                source.connect(audioContext.destination);
-                source.start(0);
-            }
-        }
-
-        // 사운드 재생 함수들을 전역으로 노출
-        window.playBrickHit = () => playSound(sounds.brickHit);
-        window.playPaddleHit = () => playSound(sounds.paddleHit);
-        window.playGameOver = () => playSound(sounds.gameOver);
-        window.playLevelUp = () => playSound(sounds.levelUp);
-        window.playPowerup = () => playSound(sounds.powerup);
-
-        // 사운드 로드 시작
-        loadAllSounds();
-
-        // 모바일 터치 이벤트 처리
-        let touchStartX = 0;
-        let touchEndX = 0;
-        const canvas = document.getElementById('gameCanvas');
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
-
-        // 터치 이벤트 처리
-        canvas.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        });
-
-        canvas.addEventListener('touchmove', (e) => {
-            touchEndX = e.touches[0].clientX;
-            const diff = touchEndX - touchStartX;
-            if (diff > 10) {
-                window.movePaddle('right');
-            } else if (diff < -10) {
-                window.movePaddle('left');
-            }
-            touchStartX = touchEndX;
-        });
-
-        // 버튼 이벤트 처리
-        leftBtn.addEventListener('touchstart', () => window.movePaddle('left'));
-        rightBtn.addEventListener('touchstart', () => window.movePaddle('right'));
-        leftBtn.addEventListener('touchend', () => window.stopPaddle());
-        rightBtn.addEventListener('touchend', () => window.stopPaddle());
-    </script>
     <script src="game.js"></script>
 </body>
 </html> 

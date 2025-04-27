@@ -58,6 +58,11 @@ let lives = 3;
 let gameOver = false;
 let bricks = [];
 
+// 모바일 터치 이벤트 변수
+let touchStartX = 0;
+let touchMoveX = 0;
+let isTouching = false;
+
 // 캔버스 크기 조정
 function resizeCanvas() {
     const container = document.getElementById('gameContainer');
@@ -208,7 +213,7 @@ function update() {
 
 // 키보드 입력 처리
 document.addEventListener('keydown', (e) => {
-    initAudio(); // 키보드 입력 시 오디오 초기화
+    initAudio();
     if (e.key === 'ArrowLeft' && paddleX > 0) {
         paddleX -= 20;
     } else if (e.key === 'ArrowRight' && paddleX < gameWidth - paddleWidth) {
@@ -216,15 +221,39 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// 모바일 터치 이벤트 처리
+canvas.addEventListener('touchstart', (e) => {
+    initAudio();
+    isTouching = true;
+    touchStartX = e.touches[0].clientX;
+    e.preventDefault();
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    if (isTouching) {
+        touchMoveX = e.touches[0].clientX;
+        const diff = touchMoveX - touchStartX;
+        paddleX += diff;
+        if (paddleX < 0) paddleX = 0;
+        if (paddleX > gameWidth - paddleWidth) paddleX = gameWidth - paddleWidth;
+        touchStartX = touchMoveX;
+    }
+    e.preventDefault();
+});
+
+canvas.addEventListener('touchend', () => {
+    isTouching = false;
+});
+
 // 버튼 이벤트 처리
 leftBtn.addEventListener('mousedown', () => {
-    initAudio(); // 버튼 클릭 시 오디오 초기화
+    initAudio();
     paddleX -= 10;
     if (paddleX < 0) paddleX = 0;
 });
 
 rightBtn.addEventListener('mousedown', () => {
-    initAudio(); // 버튼 클릭 시 오디오 초기화
+    initAudio();
     paddleX += 10;
     if (paddleX > gameWidth - paddleWidth) paddleX = gameWidth - paddleWidth;
 });
