@@ -1,15 +1,53 @@
 // 게임 설정
-let WIDTH = 800;
-let HEIGHT = 600;
-let PADDLE_WIDTH = 100;
-let PADDLE_HEIGHT = 20;
-let BALL_RADIUS = 10;
-let BRICK_WIDTH = 80;
-let BRICK_HEIGHT = 30;
-const BRICK_ROWS = 5;
-const BRICK_COLS = 10;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+// 오디오 설정
+let audioContext = null;
+const sounds = {
+    brickHit: new Audio('sounds/brick_hit.wav'),
+    paddleHit: new Audio('sounds/paddle_hit.wav'),
+    gameOver: new Audio('sounds/game_over.wav'),
+    levelUp: new Audio('sounds/level_up.wav')
+};
+
+// 오디오 초기화 함수
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // 모든 사운드를 미리 로드
+        Object.values(sounds).forEach(sound => {
+            sound.load();
+            // 볼륨 설정
+            sound.volume = 0.5;
+        });
+    }
+}
+
+// 사운드 재생 함수
+function playSound(soundName) {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    if (sounds[soundName]) {
+        sounds[soundName].currentTime = 0;
+        sounds[soundName].play().catch(error => console.log('Sound play failed:', error));
+    }
+}
 
 // 게임 상태
+let gameWidth = 800;
+let gameHeight = 600;
+let paddleWidth = 100;
+let paddleHeight = 20;
+let ballRadius = 10;
+let brickWidth = 80;
+let brickHeight = 30;
+const brickRows = 5;
+const brickCols = 10;
+
 let paddleX = 0;
 let ballX = 0;
 let ballY = 0;
@@ -20,13 +58,9 @@ let lives = 3;
 let gameOver = false;
 let bricks = [];
 
-// 캔버스 설정
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-// 캔버스 크기 조정 함수
+// 캔버스 크기 조정
 function resizeCanvas() {
-    const container = document.body;
+    const container = document.getElementById('gameContainer');
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
     
@@ -44,30 +78,30 @@ function resizeCanvas() {
     canvas.height = canvasHeight;
     
     // 게임 요소 크기 조정
-    WIDTH = canvasWidth;
-    HEIGHT = canvasHeight;
-    PADDLE_WIDTH = canvasWidth * 0.2;
-    PADDLE_HEIGHT = canvasHeight * 0.03;
-    BALL_RADIUS = canvasWidth * 0.015;
-    BRICK_WIDTH = canvasWidth * 0.1;
-    BRICK_HEIGHT = canvasHeight * 0.05;
+    gameWidth = canvasWidth;
+    gameHeight = canvasHeight;
+    paddleWidth = canvasWidth * 0.2;
+    paddleHeight = canvasHeight * 0.03;
+    ballRadius = canvasWidth * 0.015;
+    brickWidth = canvasWidth * 0.1;
+    brickHeight = canvasHeight * 0.05;
     
     // 게임 상태 초기화
-    paddleX = (WIDTH - PADDLE_WIDTH) / 2;
-    ballX = WIDTH / 2;
-    ballY = HEIGHT - 50;
+    paddleX = (gameWidth - paddleWidth) / 2;
+    ballX = gameWidth / 2;
+    ballY = gameHeight - 50;
 }
 
 // 벽돌 초기화
 function initBricks() {
     bricks = [];
-    for (let row = 0; row < BRICK_ROWS; row++) {
-        for (let col = 0; col < BRICK_COLS; col++) {
+    for (let row = 0; row < brickRows; row++) {
+        for (let col = 0; col < brickCols; col++) {
             bricks.push({
-                x: col * (BRICK_WIDTH + 10) + 10,
-                y: row * (BRICK_HEIGHT + 10) + 50,
-                width: BRICK_WIDTH,
-                height: BRICK_HEIGHT,
+                x: col * (brickWidth + 10) + 10,
+                y: row * (brickHeight + 10) + 50,
+                width: brickWidth,
+                height: brickHeight,
                 visible: true
             });
         }
@@ -78,15 +112,15 @@ function initBricks() {
 function draw() {
     // 화면 지우기
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    ctx.fillRect(0, 0, gameWidth, gameHeight);
 
     // 패들 그리기
     ctx.fillStyle = '#fff';
-    ctx.fillRect(paddleX, HEIGHT - PADDLE_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT);
+    ctx.fillRect(paddleX, gameHeight - paddleHeight, paddleWidth, paddleHeight);
 
     // 공 그리기
     ctx.beginPath();
-    ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
+    ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
     ctx.closePath();
@@ -103,11 +137,11 @@ function draw() {
     ctx.fillStyle = '#fff';
     ctx.font = '20px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
-    ctx.fillText(`Lives: ${lives}`, WIDTH - 100, 30);
+    ctx.fillText(`Lives: ${lives}`, gameWidth - 100, 30);
 
     if (gameOver) {
         ctx.font = '40px Arial';
-        ctx.fillText('Game Over!', WIDTH/2 - 100, HEIGHT/2);
+        ctx.fillText('Game Over!', gameWidth/2 - 100, gameHeight/2);
     }
 }
 
@@ -120,12 +154,12 @@ function collisionDetection() {
                 ballSpeedY = -ballSpeedY;
                 brick.visible = false;
                 score += 10;
-                window.playBrickHit();
+                playSound('brickHit');
                 
                 // 모든 벽돌이 제거되었는지 확인
                 if (bricks.every(b => !b.visible)) {
                     initBricks();
-                    window.playLevelUp();
+                    playSound('levelUp');
                 }
             }
         }
@@ -141,29 +175,29 @@ function update() {
     ballY += ballSpeedY;
 
     // 벽 충돌
-    if (ballX + BALL_RADIUS > WIDTH || ballX - BALL_RADIUS < 0) {
+    if (ballX + ballRadius > gameWidth || ballX - ballRadius < 0) {
         ballSpeedX = -ballSpeedX;
     }
-    if (ballY - BALL_RADIUS < 0) {
+    if (ballY - ballRadius < 0) {
         ballSpeedY = -ballSpeedY;
     }
 
     // 패들 충돌
-    if (ballY + BALL_RADIUS > HEIGHT - PADDLE_HEIGHT &&
-        ballX > paddleX && ballX < paddleX + PADDLE_WIDTH) {
+    if (ballY + ballRadius > gameHeight - paddleHeight &&
+        ballX > paddleX && ballX < paddleX + paddleWidth) {
         ballSpeedY = -ballSpeedY;
-        window.playPaddleHit();
+        playSound('paddleHit');
     }
 
     // 게임 오버
-    if (ballY + BALL_RADIUS > HEIGHT) {
+    if (ballY + ballRadius > gameHeight) {
         lives--;
         if (lives <= 0) {
             gameOver = true;
-            window.playGameOver();
+            playSound('gameOver');
         } else {
-            ballX = WIDTH / 2;
-            ballY = HEIGHT - 50;
+            ballX = gameWidth / 2;
+            ballY = gameHeight - 50;
             ballSpeedX = 5;
             ballSpeedY = -5;
         }
@@ -174,11 +208,25 @@ function update() {
 
 // 키보드 입력 처리
 document.addEventListener('keydown', (e) => {
+    initAudio(); // 키보드 입력 시 오디오 초기화
     if (e.key === 'ArrowLeft' && paddleX > 0) {
         paddleX -= 20;
-    } else if (e.key === 'ArrowRight' && paddleX < WIDTH - PADDLE_WIDTH) {
+    } else if (e.key === 'ArrowRight' && paddleX < gameWidth - paddleWidth) {
         paddleX += 20;
     }
+});
+
+// 버튼 이벤트 처리
+leftBtn.addEventListener('mousedown', () => {
+    initAudio(); // 버튼 클릭 시 오디오 초기화
+    paddleX -= 10;
+    if (paddleX < 0) paddleX = 0;
+});
+
+rightBtn.addEventListener('mousedown', () => {
+    initAudio(); // 버튼 클릭 시 오디오 초기화
+    paddleX += 10;
+    if (paddleX > gameWidth - paddleWidth) paddleX = gameWidth - paddleWidth;
 });
 
 // 게임 루프
@@ -188,28 +236,13 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// 패들 이동 함수를 전역으로 노출
-window.movePaddle = function(direction) {
-    if (direction === 'left') {
-        paddleX -= 10;
-    } else if (direction === 'right') {
-        paddleX += 10;
-    }
-    // 패들이 화면을 벗어나지 않도록 제한
-    if (paddleX < 0) paddleX = 0;
-    if (paddleX > WIDTH - PADDLE_WIDTH) paddleX = WIDTH - PADDLE_WIDTH;
-};
-
-// 패들 정지 함수를 전역으로 노출
-window.stopPaddle = function() {
-    // 필요한 경우 추가 로직 구현
-};
-
 // 창 크기 변경 시 캔버스 크기 조정
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('orientationchange', resizeCanvas);
 
 // 게임 초기화
-resizeCanvas();
-initBricks();
-gameLoop(); 
+window.addEventListener('load', () => {
+    resizeCanvas();
+    initBricks();
+    gameLoop();
+}); 
