@@ -21,16 +21,29 @@
     <canvas id="gameCanvas"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/pygame.js@0.1.0/dist/pygame.js"></script>
     <script>
-        // 사운드 설정
-        pygame.init();
-        pygame.mixer.init();
+        // 사운드 파일 경로 설정
+        const soundBasePath = 'https://taxsolve.github.io/arkanoid-game/sounds/';
         
         // 사운드 파일 로드
-        const brickHitSound = new Audio('sounds/brick_hit.wav');
-        const paddleHitSound = new Audio('sounds/paddle_hit.wav');
-        const gameOverSound = new Audio('sounds/game_over.wav');
-        const levelUpSound = new Audio('sounds/level_up.wav');
-        const powerupSound = new Audio('sounds/powerup.wav');
+        const brickHitSound = new Audio(soundBasePath + 'brick_hit.wav');
+        const paddleHitSound = new Audio(soundBasePath + 'paddle_hit.wav');
+        const gameOverSound = new Audio(soundBasePath + 'game_over.wav');
+        const levelUpSound = new Audio(soundBasePath + 'level_up.wav');
+        const powerupSound = new Audio(soundBasePath + 'powerup.wav');
+
+        // 사운드 로드 확인
+        brickHitSound.oncanplaythrough = () => console.log('Brick hit sound loaded');
+        paddleHitSound.oncanplaythrough = () => console.log('Paddle hit sound loaded');
+        gameOverSound.oncanplaythrough = () => console.log('Game over sound loaded');
+        levelUpSound.oncanplaythrough = () => console.log('Level up sound loaded');
+        powerupSound.oncanplaythrough = () => console.log('Powerup sound loaded');
+
+        // 사운드 에러 처리
+        brickHitSound.onerror = (e) => console.error('Error loading brick hit sound:', e);
+        paddleHitSound.onerror = (e) => console.error('Error loading paddle hit sound:', e);
+        gameOverSound.onerror = (e) => console.error('Error loading game over sound:', e);
+        levelUpSound.onerror = (e) => console.error('Error loading level up sound:', e);
+        powerupSound.onerror = (e) => console.error('Error loading powerup sound:', e);
     </script>
     <script src="game.js"></script>
 </body>

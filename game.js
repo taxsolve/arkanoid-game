@@ -158,30 +158,50 @@ gameLoop();
 
 // 벽돌과 공이 충돌할 때
 function handleBrickCollision() {
-    brickHitSound.play();
-    // ... existing code ...
+    try {
+        brickHitSound.currentTime = 0;
+        brickHitSound.play();
+    } catch (e) {
+        console.error('Error playing brick hit sound:', e);
+    }
 }
 
 // 패들과 공이 충돌할 때
 function handlePaddleCollision() {
-    paddleHitSound.play();
-    // ... existing code ...
+    try {
+        paddleHitSound.currentTime = 0;
+        paddleHitSound.play();
+    } catch (e) {
+        console.error('Error playing paddle hit sound:', e);
+    }
 }
 
 // 게임 오버일 때
 function gameOver() {
-    gameOverSound.play();
-    // ... existing code ...
+    try {
+        gameOverSound.currentTime = 0;
+        gameOverSound.play();
+    } catch (e) {
+        console.error('Error playing game over sound:', e);
+    }
 }
 
 // 레벨 업할 때
 function levelUp() {
-    levelUpSound.play();
-    // ... existing code ...
+    try {
+        levelUpSound.currentTime = 0;
+        levelUpSound.play();
+    } catch (e) {
+        console.error('Error playing level up sound:', e);
+    }
 }
 
 // 파워업 아이템을 획득할 때
 function collectPowerup() {
-    powerupSound.play();
-    // ... existing code ...
+    try {
+        powerupSound.currentTime = 0;
+        powerupSound.play();
+    } catch (e) {
+        console.error('Error playing powerup sound:', e);
+    }
 } 
