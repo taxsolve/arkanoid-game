@@ -2,7 +2,17 @@
 <html>
 <head>
     <title>Arkanoid Game</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+        }
         body {
             margin: 0;
             padding: 0;
@@ -11,39 +21,135 @@
             align-items: center;
             min-height: 100vh;
             background-color: #000;
+            overflow: hidden;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         canvas {
             border: 2px solid #fff;
+            max-width: 100%;
+            max-height: 100vh;
+            object-fit: contain;
+        }
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 100;
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
         }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/pygame.js@0.1.0/dist/pygame.js"></script>
+    <div id="controls">
+        <div class="control-btn" id="leftBtn">←</div>
+        <div class="control-btn" id="rightBtn">→</div>
+    </div>
     <script>
+        // 오디오 컨텍스트 생성
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
         // 사운드 파일 경로 설정
         const soundBasePath = 'https://taxsolve.github.io/arkanoid-game/sounds/';
         
-        // 사운드 파일 로드
-        const brickHitSound = new Audio(soundBasePath + 'brick_hit.wav');
-        const paddleHitSound = new Audio(soundBasePath + 'paddle_hit.wav');
-        const gameOverSound = new Audio(soundBasePath + 'game_over.wav');
-        const levelUpSound = new Audio(soundBasePath + 'level_up.wav');
-        const powerupSound = new Audio(soundBasePath + 'powerup.wav');
+        // 사운드 버퍼를 저장할 객체
+        const sounds = {
+            brickHit: null,
+            paddleHit: null,
+            gameOver: null,
+            levelUp: null,
+            powerup: null
+        };
 
-        // 사운드 로드 확인
-        brickHitSound.oncanplaythrough = () => console.log('Brick hit sound loaded');
-        paddleHitSound.oncanplaythrough = () => console.log('Paddle hit sound loaded');
-        gameOverSound.oncanplaythrough = () => console.log('Game over sound loaded');
-        levelUpSound.oncanplaythrough = () => console.log('Level up sound loaded');
-        powerupSound.oncanplaythrough = () => console.log('Powerup sound loaded');
+        // 사운드 파일 로드 함수
+        async function loadSound(url) {
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                return audioBuffer;
+            } catch (e) {
+                console.error('Error loading sound:', url, e);
+                return null;
+            }
+        }
 
-        // 사운드 에러 처리
-        brickHitSound.onerror = (e) => console.error('Error loading brick hit sound:', e);
-        paddleHitSound.onerror = (e) => console.error('Error loading paddle hit sound:', e);
-        gameOverSound.onerror = (e) => console.error('Error loading game over sound:', e);
-        levelUpSound.onerror = (e) => console.error('Error loading level up sound:', e);
-        powerupSound.onerror = (e) => console.error('Error loading powerup sound:', e);
+        // 모든 사운드 파일 로드
+        async function loadAllSounds() {
+            sounds.brickHit = await loadSound(soundBasePath + 'brick_hit.wav');
+            sounds.paddleHit = await loadSound(soundBasePath + 'paddle_hit.wav');
+            sounds.gameOver = await loadSound(soundBasePath + 'game_over.wav');
+            sounds.levelUp = await loadSound(soundBasePath + 'level_up.wav');
+            sounds.powerup = await loadSound(soundBasePath + 'powerup.wav');
+            console.log('All sounds loaded:', sounds);
+        }
+
+        // 사운드 재생 함수
+        function playSound(buffer) {
+            if (buffer) {
+                const source = audioContext.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioContext.destination);
+                source.start(0);
+            }
+        }
+
+        // 사운드 재생 함수들을 전역으로 노출
+        window.playBrickHit = () => playSound(sounds.brickHit);
+        window.playPaddleHit = () => playSound(sounds.paddleHit);
+        window.playGameOver = () => playSound(sounds.gameOver);
+        window.playLevelUp = () => playSound(sounds.levelUp);
+        window.playPowerup = () => playSound(sounds.powerup);
+
+        // 사운드 로드 시작
+        loadAllSounds();
+
+        // 모바일 터치 이벤트 처리
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const canvas = document.getElementById('gameCanvas');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+
+        // 터치 이벤트 처리
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            touchEndX = e.touches[0].clientX;
+            const diff = touchEndX - touchStartX;
+            if (diff > 10) {
+                window.movePaddle('right');
+            } else if (diff < -10) {
+                window.movePaddle('left');
+            }
+            touchStartX = touchEndX;
+        });
+
+        // 버튼 이벤트 처리
+        leftBtn.addEventListener('touchstart', () => window.movePaddle('left'));
+        rightBtn.addEventListener('touchstart', () => window.movePaddle('right'));
+        leftBtn.addEventListener('touchend', () => window.stopPaddle());
+        rightBtn.addEventListener('touchend', () => window.stopPaddle());
     </script>
     <script src="game.js"></script>
 </body>

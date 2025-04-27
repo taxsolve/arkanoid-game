@@ -158,50 +158,76 @@ gameLoop();
 
 // 벽돌과 공이 충돌할 때
 function handleBrickCollision() {
-    try {
-        brickHitSound.currentTime = 0;
-        brickHitSound.play();
-    } catch (e) {
-        console.error('Error playing brick hit sound:', e);
-    }
+    window.playBrickHit();
 }
 
 // 패들과 공이 충돌할 때
 function handlePaddleCollision() {
-    try {
-        paddleHitSound.currentTime = 0;
-        paddleHitSound.play();
-    } catch (e) {
-        console.error('Error playing paddle hit sound:', e);
-    }
+    window.playPaddleHit();
 }
 
 // 게임 오버일 때
 function gameOver() {
-    try {
-        gameOverSound.currentTime = 0;
-        gameOverSound.play();
-    } catch (e) {
-        console.error('Error playing game over sound:', e);
-    }
+    window.playGameOver();
 }
 
 // 레벨 업할 때
 function levelUp() {
-    try {
-        levelUpSound.currentTime = 0;
-        levelUpSound.play();
-    } catch (e) {
-        console.error('Error playing level up sound:', e);
-    }
+    window.playLevelUp();
 }
 
 // 파워업 아이템을 획득할 때
 function collectPowerup() {
-    try {
-        powerupSound.currentTime = 0;
-        powerupSound.play();
-    } catch (e) {
-        console.error('Error playing powerup sound:', e);
+    window.playPowerup();
+}
+
+// 패들 이동 함수를 전역으로 노출
+window.movePaddle = function(direction) {
+    if (direction === 'left') {
+        paddleX -= 10;
+    } else if (direction === 'right') {
+        paddleX += 10;
     }
-} 
+    // 패들이 화면을 벗어나지 않도록 제한
+    if (paddleX < 0) paddleX = 0;
+    if (paddleX > canvas.width - PADDLE_WIDTH) paddleX = canvas.width - PADDLE_WIDTH;
+};
+
+// 패들 정지 함수를 전역으로 노출
+window.stopPaddle = function() {
+    // 필요한 경우 추가 로직 구현
+};
+
+// 캔버스 크기 조정 함수
+function resizeCanvas() {
+    const container = document.body;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    
+    // 게임 비율 유지 (16:9)
+    const gameRatio = 16 / 9;
+    let canvasWidth = containerWidth;
+    let canvasHeight = containerWidth / gameRatio;
+    
+    if (canvasHeight > containerHeight) {
+        canvasHeight = containerHeight;
+        canvasWidth = containerHeight * gameRatio;
+    }
+    
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    
+    // 게임 요소 크기 조정
+    PADDLE_WIDTH = canvasWidth * 0.2;
+    PADDLE_HEIGHT = canvasHeight * 0.03;
+    BALL_RADIUS = canvasWidth * 0.015;
+    BRICK_WIDTH = canvasWidth * 0.1;
+    BRICK_HEIGHT = canvasHeight * 0.05;
+}
+
+// 창 크기 변경 시 캔버스 크기 조정
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', resizeCanvas);
+
+// 초기 캔버스 크기 설정
+resizeCanvas(); 
