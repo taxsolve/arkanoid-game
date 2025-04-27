@@ -20,6 +20,18 @@
 <body>
     <canvas id="gameCanvas"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/pygame.js@0.1.0/dist/pygame.js"></script>
+    <script>
+        // 사운드 설정
+        pygame.init();
+        pygame.mixer.init();
+        
+        // 사운드 파일 로드
+        const brickHitSound = new Audio('sounds/brick_hit.wav');
+        const paddleHitSound = new Audio('sounds/paddle_hit.wav');
+        const gameOverSound = new Audio('sounds/game_over.wav');
+        const levelUpSound = new Audio('sounds/level_up.wav');
+        const powerupSound = new Audio('sounds/powerup.wav');
+    </script>
     <script src="game.js"></script>
 </body>
 </html> 

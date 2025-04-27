@@ -154,4 +154,34 @@ function gameLoop() {
 
 // 게임 시작
 initBricks();
-gameLoop(); 
+gameLoop();
+
+// 벽돌과 공이 충돌할 때
+function handleBrickCollision() {
+    brickHitSound.play();
+    // ... existing code ...
+}
+
+// 패들과 공이 충돌할 때
+function handlePaddleCollision() {
+    paddleHitSound.play();
+    // ... existing code ...
+}
+
+// 게임 오버일 때
+function gameOver() {
+    gameOverSound.play();
+    // ... existing code ...
+}
+
+// 레벨 업할 때
+function levelUp() {
+    levelUpSound.play();
+    // ... existing code ...
+}
+
+// 파워업 아이템을 획득할 때
+function collectPowerup() {
+    powerupSound.play();
+    // ... existing code ...
+} 
